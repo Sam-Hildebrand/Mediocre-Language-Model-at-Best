@@ -2,13 +2,12 @@ import torch
 import sentencepiece as spm
 import numpy as np
 from torch.utils.data import DataLoader
-from GRU import GRULanguageModel
 from TextDataset import TextDataset
 from nltk.translate.bleu_score import corpus_bleu
 from tqdm import tqdm
-from GRU.train_GRU import collate_fn
 import argparse
 import os
+from TextDataset import collate_fn
 
 def compute_perplexity(model, data_loader, criterion, vocab_size, device):
     model.eval()
@@ -54,17 +53,36 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default="GRU", help="Path to trained model file")
     args = parser.parse_args()
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else 
+                      "mps" if torch.backends.mps.is_available() else 
+                      "cpu")
     
-    tokenizer = spm.SentencePieceProcessor(model_file=os.path.join(args.model_path, 'bpe_tokenizer.model'))
+    tokenizer = spm.SentencePieceProcessor("Tokenizer/bpe_tokenizer.model")
     vocab_size = tokenizer.get_piece_size()
     
     test_dataset = TextDataset("data/test.jsonl", tokenizer, 128)
-    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, collate_fn=collate_fn)
     
-    model = GRULanguageModel(vocab_size=vocab_size).to(device)
-    model.load_state_dict(torch.load(os.path.join(args.model_path, "best_model.pth"), map_location=device))
-    
+    if args.model_path == "GRU":
+        from GRU import GRULanguageModel
+        test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, collate_fn=collate_fn)
+        model = GRULanguageModel(vocab_size=vocab_size).to(device)
+        model.load_state_dict(torch.load(os.path.join(args.model_path, "best_GRU_model.pth"), map_location=device))
+    elif args.model_path == "RNN":
+        from RNN import RNNLanguageModel
+        test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, collate_fn=collate_fn)
+        model = RNNLanguageModel(vocab_size=vocab_size).to(device)
+        model.load_state_dict(torch.load(os.path.join(args.model_path, "best_RNN_model.pth"), map_location=device))
+    elif args.model_path == "LSTM":
+        from LSTM import LSTMLanguageModel
+        test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, collate_fn=collate_fn)
+        model = LSTMLanguageModel(vocab_size=vocab_size).to(device)
+        model.load_state_dict(torch.load(os.path.join(args.model_path, "best_LSTM_model.pth"), map_location=device))
+    elif args.model_path == "Transformer":
+        from Transformer import TransformerLanguageModel
+        test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, collate_fn=collate_fn)
+        model = TransformerLanguageModel(vocab_size=vocab_size).to(device)
+        model.load_state_dict(torch.load(os.path.join(args.model_path, "best_Transformer_model.pth"), map_location=device))
+
     criterion = torch.nn.CrossEntropyLoss(ignore_index=3)  # Ignore padding token
     
     ppl = compute_perplexity(model, test_loader, criterion, vocab_size, device)
