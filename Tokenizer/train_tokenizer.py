@@ -1,6 +1,7 @@
 from typing import Tuple
 import os
 import sentencepiece as spm
+import json
 
 def add_special_tokens(pairs: Tuple[list]):
     """
@@ -25,6 +26,28 @@ def add_special_tokens(pairs: Tuple[list]):
 
     return new_prompts, new_completions
 
+def process_jsonl(file_path):
+    """
+    Process a JSONL file by applying special tokens.
+    """
+    processed_data = []
+    
+    with open(file_path, 'r', encoding='utf-8') as infile:
+        pairs = [(json.loads(line)['prompt'], json.loads(line)['completion']) for line in infile]
+    
+    new_prompts, new_completions = add_special_tokens(pairs)
+    
+    for prompt, completion in zip(new_prompts, new_completions):
+        processed_data.append({'prompt': prompt, 'completion': completion})
+    
+    output_file = file_path.replace('.jsonl', '_processed.jsonl')
+    with open(output_file, 'w', encoding='utf-8') as outfile:
+        for entry in processed_data:
+            json.dump(entry, outfile)
+            outfile.write('\n')
+    
+    print(f"Processed {file_path} and saved to {output_file}")
+
 # Merge all text files into a single corpus
 def merge_text_files(data_dir, output_file):
     """
@@ -32,25 +55,12 @@ def merge_text_files(data_dir, output_file):
     :param data_dir: path to the directory containing the raw text files
     :param output_file: path to file where corpus will be saved
     """
-    all_pairs = []
-    
-    for filename in sorted(os.listdir(data_dir)):  # Sort for consistency
-        file_path = os.path.join(data_dir, filename)
-        if os.path.isfile(file_path) and filename.endswith(".txt"):
-            with open(file_path, "r", encoding="utf-8") as infile:
-                lines = [line.strip() for line in infile.readlines() if line.strip()]
-                for i in range(0, len(lines) - 1, 2):  # Assuming even indices are prompts, odd are completions
-                    prompt = lines[i]
-                    completion = lines[i + 1] if i + 1 < len(lines) else ""
-                    all_pairs.append((prompt, completion))
-    
-    # Apply special tokens
-    new_prompts, new_completions = add_special_tokens(all_pairs)
-    
-    # Save to file
     with open(output_file, "w", encoding="utf-8") as outfile:
-        for prompt, completion in zip(new_prompts, new_completions):
-            outfile.write(prompt + "\n" + completion + "\n")
+        for filename in sorted(os.listdir(data_dir)):  # Sort for consistency
+            file_path = os.path.join(data_dir, filename)
+            if os.path.isfile(file_path) and filename.endswith(".txt"):
+                with open(file_path, "r", encoding="utf-8") as infile:
+                    outfile.write(infile.read() + "\n")  # Ensure separation
 
 
 if __name__ == "__main__":
@@ -59,6 +69,10 @@ if __name__ == "__main__":
     VOCAB_SIZE = 10000 # stopping condition for tokenizing
     CORPUS_FILE = "../data/corpus.txt" # path to the new combined corpus file
     merge_text_files(DATA_DIR, CORPUS_FILE)
+
+    print("Applying Special Tokens to Testing and Training Dataset")
+    process_jsonl("../data/test.jsonl")
+    process_jsonl("../data/train.jsonl")
 
     # Train the tokenizer with special tokens
     spm.SentencePieceTrainer.train(

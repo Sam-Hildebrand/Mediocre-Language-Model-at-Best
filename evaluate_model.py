@@ -60,7 +60,7 @@ if __name__ == "__main__":
     tokenizer = spm.SentencePieceProcessor("Tokenizer/bpe_tokenizer.model")
     vocab_size = tokenizer.get_piece_size()
     
-    test_dataset = TextDataset("data/test.jsonl", tokenizer, 128)
+    test_dataset = TextDataset("data/test_processed.jsonl", tokenizer, 128)
     
     if args.model_path == "GRU":
         from GRU import GRULanguageModel

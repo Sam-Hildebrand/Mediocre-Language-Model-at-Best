@@ -8,6 +8,7 @@ import argparse
 import os
 import datetime
 from pathlib import Path
+from TextDataset import TextDataset, collate_fn
 
 BATCH_SIZE = 128
 EPOCHS = 30
@@ -27,11 +28,11 @@ def plot_loss_curve(train_losses, val_losses, model_name):
     plt.close()
 
 def train_model(model, model_name):
-    assert Path("data/train.jsonl").exists(), "Training dataset not found!"
-    assert Path("data/test.jsonl").exists(), "Validation dataset not found!"
+    assert Path("data/train_processed.jsonl").exists(), "Training dataset not found!"
+    assert Path("data/test_processed.jsonl").exists(), "Validation dataset not found!"
     
-    train_dataset = TextDataset("data/train.jsonl", tokenizer, 128)
-    val_dataset = TextDataset("data/test.jsonl", tokenizer, 128)
+    train_dataset = TextDataset("data/train_processed.jsonl", tokenizer, 128)
+    val_dataset = TextDataset("data/test_processed.jsonl", tokenizer, 128)
     
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_fn)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
@@ -101,7 +102,6 @@ if __name__ == "__main__":
     
     tokenizer = spm.SentencePieceProcessor(model_file='Tokenizer/bpe_tokenizer.model')
     vocab_size = tokenizer.get_piece_size()
-    from TextDataset import TextDataset, collate_fn
     
     model_classes = {
         "GRU": "GRULanguageModel",
