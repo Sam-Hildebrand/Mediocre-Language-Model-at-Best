@@ -14,6 +14,15 @@ from BaseLanguageModel import BaseLanguageModel
 
 class TransformerLanguageModel(BaseLanguageModel):
     def __init__(self, vocab_size, embed_dim=256, num_layers=6, nhead=2, max_seq_length=512, dropout=0.2, pad_token_id=3):
+        """
+        Transformer Language Model
+        :param vocab_size: Vocabulary size
+        :param embed_dim: Size of token embedding vectors
+        :param hidden_dim: Hidden size of the RNN
+        :param num_layers: Number of RNN layers
+        :param dropout: Dropout rate
+        :param pad_token_id: Token ID of <pad> token
+        """
         super().__init__(vocab_size, embed_dim, pad_token_id, model_name="Transformer")
         self.pos_embedding = nn.Embedding(max_seq_length, embed_dim)
         encoder_layer = nn.TransformerEncoderLayer(d_model=embed_dim, nhead=nhead, dropout=dropout, batch_first=True)

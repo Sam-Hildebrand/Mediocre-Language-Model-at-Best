@@ -14,6 +14,15 @@ from BaseLanguageModel import BaseLanguageModel
 
 class GRULanguageModel(BaseLanguageModel):
     def __init__(self, vocab_size, embed_dim=256, hidden_dim=512, num_layers=6, dropout=0.2, pad_token_id=3):
+        """
+        Gated Recurrent Unit (GRU) Language Model
+        :param vocab_size: Vocabulary size
+        :param embed_dim: Size of token embedding vectors
+        :param hidden_dim: Hidden size of the RNN
+        :param num_layers: Number of RNN layers
+        :param dropout: Dropout rate
+        :param pad_token_id: Token ID of <pad> token
+        """
         super().__init__(vocab_size, embed_dim, pad_token_id, model_name="GRU")
         self.gru = nn.GRU(embed_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_dim, vocab_size)

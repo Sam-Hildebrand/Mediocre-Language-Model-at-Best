@@ -42,7 +42,7 @@ def compute_bleu_score(model, data_loader, tokenizer, device):
                 pred_text = tokenizer.decode(pred)
                 target_text = tokenizer.decode(target)
                 
-                references.append([target_text.split()])  # BLEU expects list of lists
+                references.append([target_text.split()])
                 hypotheses.append(pred_text.split())
     
     bleu_score = corpus_bleu(references, hypotheses)
